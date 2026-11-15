@@ -76,22 +76,26 @@
                   <input v-model="form.title" required type="text" placeholder="e.g. Mini Fridge, barely used OR Room Cleaning Service" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-brand-500 transition-colors font-medium text-slate-900" />
                 </div>
                 
-                <!-- Listing Type -->
+                <!-- Listing Type: one choice, so a dropdown rather than three radio buttons. -->
                 <div class="relative z-30">
                   <label class="block text-sm font-bold text-slate-700 mb-2">Listing Type</label>
-                  <div class="flex gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" v-model="form.type" value="sell" class="text-brand-600 focus:ring-brand-500" />
-                      <span class="font-medium text-slate-700">Sell Item</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" v-model="form.type" value="swap" class="text-brand-600 focus:ring-brand-500" />
-                      <span class="font-medium text-slate-700">Swap Item</span>
-                    </label>
-                    <label class="flex items-center gap-2 cursor-pointer">
-                      <input type="radio" v-model="form.type" value="service" class="text-brand-600 focus:ring-brand-500" />
-                      <span class="font-medium text-slate-700">Offer Service</span>
-                    </label>
+                  <div @click="typeOpen = !typeOpen; catOpen = false; condOpen = false" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 cursor-pointer flex justify-between items-center transition-colors hover:border-brand-500">
+                    <span class="font-medium text-slate-900">{{ listingTypeLabel }}</span>
+                    <ChevronDown class="w-4 h-4 text-slate-400" :class="{ 'rotate-180': typeOpen }" />
+                  </div>
+                  <div v-if="typeOpen" class="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-30 overflow-hidden">
+                    <div
+                      v-for="opt in listingTypes"
+                      :key="opt.value"
+                      @click="form.type = opt.value; typeOpen = false"
+                      class="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0 border-slate-100 flex items-center justify-between gap-3"
+                    >
+                      <div>
+                        <p class="font-semibold text-slate-900">{{ opt.label }}</p>
+                        <p class="text-xs font-medium text-slate-500">{{ opt.hint }}</p>
+                      </div>
+                      <svg v-if="form.type === opt.value" class="w-4 h-4 text-brand-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                    </div>
                   </div>
                 </div>
                 
@@ -361,6 +365,18 @@ const handleAuthSuccess = () => {
 
 const catOpen = ref(false)
 const condOpen = ref(false)
+const typeOpen = ref(false)
+
+// Three listings, each with the consequence spelled out.
+const listingTypes = [
+  { value: 'sell', label: 'Sell an item', hint: 'Set a price. Buyer pays through Erranders.' },
+  { value: 'swap', label: 'Swap an item', hint: 'Trade it for something else on campus.' },
+  { value: 'service', label: 'Offer a service', hint: 'Cleaning, repairs, tutoring, deliveries.' },
+]
+
+const listingTypeLabel = computed(
+  () => listingTypes.find((t) => t.value === form.type)?.label || 'Select a listing type',
+)
 const conditions = ['Brand New', 'Like New', 'Good', 'Fair']
 const promotedFee = ref(0)
 

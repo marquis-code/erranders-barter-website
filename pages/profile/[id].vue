@@ -457,13 +457,15 @@ useSeoMeta({
 </script>
 
 <style scoped>
-/* The profile is a screen, not a document: it fills the viewport and scrolls inside itself, so the window
-   never scrolls and the header cannot drift over the listing grid. */
+/* A full screen over the site chrome: the navigation is hidden behind it, and the page scrolls normally inside,
+   which is what a phone expects. A nested scroll container here simply refused to scroll on iOS. */
 .profile-page {
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .profile-page > header {
@@ -471,9 +473,6 @@ useSeoMeta({
 }
 
 .profile-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  min-height: 100%;
 }
 </style>

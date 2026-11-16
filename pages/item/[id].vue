@@ -538,12 +538,51 @@ const reportTarget = computed(() =>
 )
 const loading = ref(true)
 
+/**
+ * What a shared link shows.
+ *
+ * The title carries the item and its price, and the description states the two things a stranger needs: it is for
+ * sale on campus, and it is bought through Decluttered by Erranders with the money held in escrow. A bare item
+ * description, when one exists at all, told a reader nothing about where to buy it.
+ */
+const seoPrice = computed(() => {
+  const p = Number(item.value?.price || 0)
+  return p > 0 ? `₦${p.toLocaleString()}` : ''
+})
+
+const seoTitle = computed(() => {
+  if (!item.value) return 'Item on Decluttered by Erranders'
+  const price = seoPrice.value ? ` — ${seoPrice.value}` : ''
+  return `${item.value.title}${price} | Buy on Decluttered by Erranders`
+})
+
+const seoDescription = computed(() => {
+  if (!item.value) return 'Campus deals from verified students, bought safely through Decluttered by Erranders.'
+
+  const where = item.value.location ? ` in ${item.value.location}` : ' on campus'
+  const price = seoPrice.value ? ` for ${seoPrice.value}` : ''
+  const extra = (item.value.description || '').trim()
+  const base = `Buy ${item.value.title}${price}${where} on Decluttered by Erranders. Payment is held in escrow until you and the seller agree the handover is done.`
+
+  // Room for the seller's own words, without letting them swamp the sentence that explains the platform.
+  return extra ? `${base} ${extra.slice(0, 120)}${extra.length > 120 ? '…' : ''}` : base
+})
+
 useSeoMeta({
-  title: computed(() => item.value ? `${item.value.title} | Decluttered by Erranders` : 'Loading Item...'),
-  description: computed(() => item.value ? item.value.description : 'View item details on Decluttered by Erranders.'),
-  ogTitle: computed(() => item.value ? item.value.title : 'Decluttered by Erranders Item'),
-  ogDescription: computed(() => item.value ? item.value.description : 'View item details on Decluttered by Erranders.'),
-  ogImage: computed(() => item.value && item.value.images?.[0] ? item.value.images[0] : ''),
+  title: seoTitle,
+  description: seoDescription,
+  ogTitle: seoTitle,
+  ogDescription: seoDescription,
+  ogType: 'product',
+  ogSiteName: 'Decluttered by Erranders',
+  ogImage: computed(() => (item.value?.images?.[0] ? item.value.images[0] : '')),
+  twitterCard: 'summary_large_image',
+  twitterTitle: seoTitle,
+  twitterDescription: seoDescription,
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: computed(() => `https://decluttered.erranders.org/item/${item.value?._id || ''}`) }],
 })
 
 const mediaGallery = ref([])

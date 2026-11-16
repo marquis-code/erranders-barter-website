@@ -100,9 +100,18 @@
               <button type="button" class="action" @click="openEdit(item)">
                 <Pencil class="w-3.5 h-3.5" /> Edit
               </button>
-              <button type="button" class="action danger" @click="askDelete(item)">
+              <!-- Sold or negotiating listings keep their place in the record. -->
+              <button
+                v-if="item.canDelete !== false"
+                type="button"
+                class="action danger"
+                @click="askDelete(item)"
+              >
                 <Trash2 class="w-3.5 h-3.5" /> Delete
               </button>
+              <span v-else class="action locked" :title="item.deleteBlockedReason">
+                <Lock class="w-3.5 h-3.5" /> {{ item.deleteBlockedReason }}
+              </span>
             </div>
           </div>
         </article>
@@ -232,7 +241,7 @@
 </template>
 
 <script setup>
-import { Plus, PackageX, MapPin, Pencil, Trash2, LayoutGrid, List, ChevronDown, Check, X, ImagePlus, Video } from 'lucide-vue-next'
+import { Plus, PackageX, MapPin, Pencil, Trash2, LayoutGrid, List, ChevronDown, Check, X, ImagePlus, Video, Lock } from 'lucide-vue-next'
 import { ref, computed, onMounted } from 'vue'
 import { itemsApi } from '~/composables/useApi'
 import { upload_api } from '~/api_factory/modules/upload'
@@ -466,6 +475,14 @@ onMounted(() => {
 .action:hover {
   border-color: #ff5c1a;
   color: #ff5c1a;
+}
+
+.action.locked {
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 650;
 }
 
 .action.danger:hover {

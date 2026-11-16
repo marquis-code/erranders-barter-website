@@ -1,140 +1,98 @@
 <template>
   <div class="min-h-screen bg-white font-sans text-slate-900 pb-20 selection:bg-brand-500 selection:text-white">
     
-    <!-- ── Dynamic Hero: Full-Height Immersive Showcase ── -->
-    <section class="relative bg-gradient-to-b from-slate-50/90 via-white to-white border-b border-slate-100 min-h-[100dvh] flex flex-col justify-between pt-24 sm:pt-28 md:pt-32 pb-6 sm:pb-8 px-4 sm:px-6 lg:px-8 overflow-hidden text-center">
-      <!-- Soft dot background grid & organic ambient blooms -->
-      <div class="absolute inset-0 bg-[radial-gradient(#e2e8f0_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-75 pointer-events-none"></div>
-      <div class="absolute -top-24 -left-24 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
+    <!-- ── Hero: what this is, then one field to start ── -->
+    <section class="hero">
+      <div class="hero-inner">
+        <!-- Left: the offer, in the site's own voice -->
+        <div class="hero-copy">
+          <!--
+            Language tabs sit here in the design. They are off for now: the copy below is English, and
+            four of the five tabs would show the same words.
+          <div class="langs">
+            <button v-for="l in ['English', 'Pidgin', 'Yorùbá', 'Igbo', 'Hausa']" :key="l" class="lang">{{ l }}</button>
+          </div>
+          -->
 
-      <!-- Main Central Core -->
-      <div class="max-w-4xl w-full mx-auto relative z-10 flex-1 flex flex-col justify-center items-center my-auto space-y-4 sm:space-y-6 py-4">
-        <!-- Top Eyebrow Badge -->
-        <div class="flex items-center justify-center">
-          <NuxtLink
-            to="/declutter"
-            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200/80 text-brand-700 text-xs sm:text-sm font-bold shadow-2xs hover:bg-brand-100/70 transition-colors"
-          >
-            <Zap class="w-3.5 h-3.5 fill-current text-brand-600 animate-pulse" />
-            <span>⚡ Turn Room Clutter into Cash ⚡</span>
-          </NuxtLink>
-        </div>
+          <h1 class="hero-title">
+            Sell what you don't need.<br />
+            <span class="mark">Get paid fast.</span>
+          </h1>
 
-        <!-- Main Power Headline -->
-        <h1 class="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-slate-900 leading-[1.14] max-w-3xl mx-auto">
-          Turn your room clutter into
-          <span class="text-[#FF5C1A]">cash sharp-sharp</span> 🔥
-        </h1>
+          <p class="hero-sub">
+            Buy, sell, or swap room essentials with verified students on your campus. Your money is held
+            until you both agree, so nobody is left guessing.
+          </p>
 
-        <!-- Clean, punchy subtitle with Escrow Guarantee -->
-        <p class="max-w-xl mx-auto text-xs sm:text-base font-medium text-slate-500 sm:text-slate-600 leading-relaxed px-2">
-          Buy, sell, and swap room essentials with verified campus students. Instant Escrow security — zero stories!
-        </p>
+          <!-- What you can do here -->
+          <div class="modes" role="tablist" aria-label="What do you want to do">
+            <NuxtLink to="/explore" class="mode">Buy</NuxtLink>
+            <NuxtLink to="/sell" class="mode">Sell</NuxtLink>
+            <NuxtLink to="/swap" class="mode">Swap</NuxtLink>
+            <NuxtLink to="/declutter" class="mode">Declutter</NuxtLink>
+            <NuxtLink to="/become-a-provider" class="mode">Services</NuxtLink>
+          </div>
 
-        <!-- Live Omnibox Search -->
-        <div class="max-w-2xl w-full mx-auto pt-1 sm:pt-2">
-          <form class="flex items-center gap-2" @submit.prevent="submitSearch">
-            <div class="relative flex-1">
-              <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 sm:w-5 h-4 sm:h-5 text-slate-400" />
-              <input
-                v-model="searchInput"
-                type="text"
-                class="w-full bg-white hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-brand-600 rounded-2xl pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 text-xs sm:text-base font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-brand-600/10 transition-all shadow-sm"
-                placeholder="Search hostel movers, electricians, mini-fridges, fans, textbooks..."
-              />
-            </div>
-            <button
-              type="submit"
-              class="bg-slate-900 hover:bg-brand-600 text-white font-black px-5 sm:px-6 py-3 sm:py-3.5 rounded-2xl text-xs sm:text-sm transition-all shrink-0 active:scale-95 shadow-sm cursor-pointer"
-            >
-              Search
-            </button>
+          <form class="search" @submit.prevent="submitSearch">
+            <Search class="search-icon" aria-hidden="true" />
+            <input
+              v-model="searchInput"
+              type="text"
+              aria-label="Search campus listings"
+              placeholder="Search fans, mini-fridges, textbooks, mattresses"
+            />
+            <button type="submit" class="search-go">Search</button>
           </form>
+
+          <p class="hero-note">Campus deals from verified students.</p>
         </div>
 
-        <!-- ── Sleek Action Launchpad (5-Pillar Symmetrical Grid) ── -->
-        <div class="w-full max-w-2xl mx-auto pt-3 sm:pt-5">
-          <div class="bg-white/85 backdrop-blur-xl border border-slate-200/90 rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 shadow-lg shadow-slate-900/5">
-            <div class="grid grid-cols-5 gap-1 sm:gap-2">
-              <!-- 1. Buy -->
-              <NuxtLink
-                to="/explore"
-                class="group flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl sm:rounded-2xl hover:bg-slate-50/90 transition-all active:scale-95"
-              >
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-sky-50 text-sky-600 border border-sky-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-sky-100 transition-all shadow-2xs">
-                  <ShoppingBag class="w-5 h-5 sm:w-6 sm:h-6" />
-                </div>
-                <span class="text-[11px] sm:text-xs font-black text-slate-900 mt-1.5 leading-tight">Buy</span>
-                <span class="text-[9px] text-slate-400 font-semibold hidden md:block">Campus Deals</span>
-              </NuxtLink>
-
-              <!-- 2. Sell (High energy CTA) -->
-              <NuxtLink
-                to="/sell"
-                class="group flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-[#FF5C1A]/5 hover:bg-[#FF5C1A]/10 border border-[#FF5C1A]/20 transition-all active:scale-95 relative"
-              >
-                <span class="absolute -top-1.5 px-1.5 py-0.2 rounded-full bg-[#FF5C1A] text-white text-[7px] sm:text-[8px] font-black uppercase tracking-wider hidden sm:block">Cash Out</span>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#FF5C1A] text-white flex items-center justify-center group-hover:scale-110 shadow-sm shadow-[#FF5C1A]/30 transition-all">
-                  <Tag class="w-5 h-5 sm:w-6 sm:h-6" />
-                </div>
-                <span class="text-[11px] sm:text-xs font-black text-[#FF5C1A] mt-1.5 leading-tight">Sell</span>
-                <span class="text-[9px] text-[#FF5C1A]/70 font-semibold hidden md:block">Make Cash</span>
-              </NuxtLink>
-
-              <!-- 3. Swap -->
-              <NuxtLink
-                to="/swap"
-                class="group flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl sm:rounded-2xl hover:bg-purple-50/50 transition-all active:scale-95"
-              >
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-purple-100 transition-all shadow-2xs">
-                  <ArrowRightLeft class="w-5 h-5 sm:w-6 sm:h-6" />
-                </div>
-                <span class="text-[11px] sm:text-xs font-black text-slate-900 mt-1.5 leading-tight">Swap</span>
-                <span class="text-[9px] text-slate-400 font-semibold hidden md:block">Trade Items</span>
-              </NuxtLink>
-
-              <!-- 4. 1-Click Declutter (Star Feature) -->
-              <NuxtLink
-                to="/declutter"
-                class="group flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-slate-900 text-white hover:bg-slate-800 transition-all active:scale-95 relative shadow-sm"
-              >
-                <span class="absolute -top-1.5 px-1.5 py-0.2 rounded-full bg-amber-400 text-slate-950 text-[7px] sm:text-[8px] font-black uppercase tracking-wider hidden sm:block">Fast Box</span>
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/10 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-all">
-                  <Zap class="w-5 h-5 sm:w-6 sm:h-6 fill-current" />
-                </div>
-                <span class="text-[10px] sm:text-xs font-black text-white mt-1.5 leading-tight truncate">Declutter</span>
-                <span class="text-[9px] text-slate-300 font-semibold hidden md:block">Room Boxes</span>
-              </NuxtLink>
-
-              <!-- 5. Offer Service -->
-              <NuxtLink
-                to="/become-a-provider"
-                class="group flex flex-col items-center justify-center p-2 sm:p-2.5 rounded-xl sm:rounded-2xl hover:bg-emerald-50/50 transition-all active:scale-95"
-              >
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center group-hover:scale-110 group-hover:bg-emerald-100 transition-all shadow-2xs">
-                  <Wrench class="w-5 h-5 sm:w-6 sm:h-6" />
-                </div>
-                <span class="text-[11px] sm:text-xs font-black text-slate-900 mt-1.5 leading-tight">Services</span>
-                <span class="text-[9px] text-slate-400 font-semibold hidden md:block">Movers & Pros</span>
-              </NuxtLink>
+        <!-- Right: the same idea as tickets, at the sizes people actually sell -->
+        <div class="hero-art" aria-hidden="true">
+          <div class="ticket ticket-s">
+            <div class="ticket-top tone-blue"><span>S</span></div>
+            <div class="ticket-body">
+              <p class="t-title">Standing fan</p>
+              <p class="t-meta">Block 4 · Good condition</p>
+              <p class="t-price">₦12,000</p>
             </div>
+          </div>
+
+          <div class="ticket ticket-m">
+            <div class="ticket-top tone-green"><span>M</span></div>
+            <div class="ticket-body">
+              <p class="t-title">Mini fridge</p>
+              <p class="t-meta">Used for 1 year</p>
+              <p class="t-price">₦45,000</p>
+            </div>
+          </div>
+
+          <div class="ticket ticket-t">
+            <div class="ticket-top tone-purple"><span>T</span></div>
+            <div class="ticket-body">
+              <p class="t-title">Textbook bundle</p>
+              <p class="t-meta">300L Medicine</p>
+              <p class="t-price">₦8,000</p>
+            </div>
+          </div>
+
+          <div class="ticket ticket-held">
+            <div class="held-top">
+              <p class="held-label"><span class="held-dot" aria-hidden="true"></span> Held safely</p>
+              <p class="held-body">Released when you both agree</p>
+            </div>
+            <div class="held-stub">₦12,000</div>
           </div>
         </div>
       </div>
 
-      <!-- Bottom Scroll Cue -->
-      <div class="relative z-10 pt-3 pb-1 flex flex-col items-center justify-center shrink-0">
-        <a
-          href="#declutter-section"
-          class="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-slate-400 hover:text-[#FF5C1A] transition-colors group cursor-pointer"
-        >
-          <span>Explore campus room clearances</span>
-          <ChevronDown class="w-3.5 h-3.5 text-slate-400 group-hover:text-[#FF5C1A] animate-bounce" />
-        </a>
-      </div>
+      <!-- Three promises, under the fold line -->
+      <ul class="trust">
+        <li><CheckCircle2 class="trust-icon" aria-hidden="true" /> Verified students only</li>
+        <li><CheckCircle2 class="trust-icon" aria-hidden="true" /> Payment held until you both agree</li>
+        <li><CheckCircle2 class="trust-icon" aria-hidden="true" /> Zero listing fees</li>
+      </ul>
     </section>
-
 
     <!-- ── Live Fast Filter Tabs (Sticky/Quick-jump) ── -->
     <div class="sticky top-16 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
@@ -1704,5 +1662,299 @@ onUnmounted(() => {
 .fade-sub-leave-to {
   opacity: 0;
   transform: translateY(-6px);
+}
+
+/* ── Hero ── */
+.hero {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 116px 20px 28px;
+}
+
+.hero-inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 36px;
+  align-items: center;
+}
+
+@media (min-width: 960px) {
+  .hero-inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+    gap: 56px;
+  }
+}
+
+.hero-title {
+  margin: 0;
+  font-size: clamp(38px, 7vw, 68px);
+  line-height: 1.02;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: #14110d;
+}
+
+/* The underline is the only decoration on the headline. */
+.mark {
+  border-bottom: 7px solid #f2683a;
+  padding-bottom: 2px;
+}
+
+.hero-sub {
+  margin: 22px 0 0;
+  max-width: 46ch;
+  font-size: 16.5px;
+  line-height: 1.55;
+  color: #6d675f;
+}
+
+.modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 26px;
+}
+
+.mode {
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid #e3ded6;
+  background: #fff;
+  color: #14110d;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.mode:hover {
+  border-color: #f2683a;
+  color: #f2683a;
+}
+
+.mode:first-child {
+  background: #14110d;
+  border-color: #14110d;
+  color: #fff;
+}
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 7px 7px 7px 16px;
+  border-radius: 16px;
+  border: 1.5px solid #14110d;
+  background: #fff;
+}
+
+.search-icon {
+  width: 18px;
+  height: 18px;
+  color: #8a837a;
+  flex: none;
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #14110d;
+  font-size: 15.5px;
+  font-weight: 500;
+  padding: 10px 0;
+}
+
+.search input::placeholder {
+  color: #948d84;
+}
+
+.search-go {
+  flex: none;
+  padding: 12px 22px;
+  border: 0;
+  border-radius: 11px;
+  background: #f2683a;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.search-go:hover {
+  background: #e2571f;
+}
+
+.hero-note {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: #8a837a;
+}
+
+/* ── Tickets ── */
+.hero-art {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  max-width: 520px;
+  justify-self: center;
+  width: 100%;
+}
+
+.ticket {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(20, 17, 13, 0.10), 0 2px 6px rgba(20, 17, 13, 0.06);
+}
+
+.ticket-s { transform: rotate(-2.5deg); }
+.ticket-m { transform: rotate(1.5deg) translateY(14px); }
+.ticket-t { transform: rotate(-1.5deg); }
+
+.ticket-top {
+  display: grid;
+  place-items: center;
+  height: 92px;
+}
+
+.ticket-top span {
+  font-size: 30px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+.tone-blue { background: #2f6fa8; }
+.tone-green { background: #3c7a4e; }
+.tone-purple { background: #8b3a86; }
+
+.ticket-body {
+  padding: 12px 14px 14px;
+}
+
+.t-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 750;
+  color: #14110d;
+}
+
+.t-meta {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: #8a837a;
+}
+
+.t-price {
+  margin: 8px 0 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: #14110d;
+}
+
+/* The held-payment ticket: dark body, orange stub, notches where it tears. */
+.ticket-held {
+  grid-column: 2;
+  align-self: start;
+  transform: rotate(2deg) translateY(-6px);
+  background: #17140f;
+  color: #fff;
+}
+
+.held-top {
+  padding: 14px 14px 12px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.28);
+}
+
+.held-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #6ee7a8;
+}
+
+.held-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #6ee7a8;
+}
+
+.held-body {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #d8d2c9;
+}
+
+.held-stub {
+  padding: 12px 14px;
+  background: #f2683a;
+  color: #fff;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+/* ── Promises ── */
+.trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 40px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trust li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 999px;
+  border: 1px solid #e3ded6;
+  background: #fff;
+  font-size: 14.5px;
+  font-weight: 650;
+  color: #14110d;
+}
+
+.trust-icon {
+  width: 17px;
+  height: 17px;
+  color: #1f8f4e;
+  flex: none;
+}
+
+@media (max-width: 599px) {
+  .hero {
+    padding-top: 94px;
+  }
+
+  .hero-art {
+    gap: 10px;
+  }
+
+  .ticket-top {
+    height: 70px;
+  }
+
+  .ticket-top span {
+    font-size: 24px;
+  }
+
+  .mark {
+    border-bottom-width: 5px;
+  }
 }
 </style>

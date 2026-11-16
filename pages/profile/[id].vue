@@ -260,11 +260,31 @@
 
       </div>
 
-      <!-- Favorites / Liked Tab -->
-      <div v-else-if="activeTab === 'likes'" class="mt-8 text-center py-12 text-slate-500">
-        <Heart class="w-12 h-12 mx-auto mb-2 text-slate-600" />
-        <h4 class="text-sm font-bold text-white">Liked Listings Private</h4>
-        <p class="text-xs text-slate-400 mt-1">This student's liked campus reels are private.</p>
+      <!-- Liked listings, as they actually are -->
+      <div v-else class="mt-4">
+        <div v-if="likedItems.length" class="grid grid-cols-2 gap-2">
+          <NuxtLink
+            v-for="liked in likedItems"
+            :key="liked._id"
+            :to="`/item/${liked._id}`"
+            class="relative aspect-square rounded-xl overflow-hidden bg-white/5 border border-white/10"
+          >
+            <img v-if="liked.images?.[0]" :src="liked.images[0]" :alt="liked.title" class="w-full h-full object-cover" />
+            <div v-else class="w-full h-full flex items-center justify-center text-slate-500">
+              <Package class="w-6 h-6" />
+            </div>
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+              <p class="text-[11px] font-bold text-white truncate">{{ liked.title }}</p>
+              <p v-if="liked.price" class="text-[11px] font-black text-[#FF5C1A]">₦{{ Number(liked.price).toLocaleString() }}</p>
+            </div>
+          </NuxtLink>
+        </div>
+
+        <div v-else class="text-center py-14 text-slate-500">
+          <Heart class="w-10 h-10 mx-auto mb-2 text-slate-600" />
+          <h4 class="text-sm font-bold text-white">No likes yet</h4>
+          <p class="text-xs text-slate-400 mt-1">Items this student saves will appear here.</p>
+        </div>
       </div>
 
     </div>
@@ -318,6 +338,7 @@ const isCurrentUserProfile = computed(() => currentUser.value?._id && String(cur
 
 const profileUser = ref<any | null>(null);
 const userItems = ref<any[]>([]);
+const likedItems = ref<any[]>([]);
 const loading = ref(true);
 const errorState = ref(false);
 const activeTab = ref<'listings' | 'likes'>('listings');
@@ -340,14 +361,32 @@ const profileHandle = computed(() => {
   return `${first}${last ? '_' + last[0] : ''}1`;
 });
 
+/**
+ * Trades actually completed by this student.
+ *
+ * This was `totalTrades || listings * 2 + 3`, which invented a number for anyone without the field — every new
+ * profile claimed five trades. Sold listings are the only count we can stand behind; zero is the honest answer for
+ * someone who has not traded yet.
+ */
 const completedTradesCount = computed(() => {
-  return profileUser.value?.totalTrades || userItems.value.length * 2 + 3;
+  const fromApi = Number(profileUser.value?.totalTrades ?? profileUser.value?.completedTrades ?? 0);
+  if (fromApi > 0) return fromApi;
+
+  const sold = userItems.value.filter((i) => ['sold', 'completed'].includes(String(i.status))).length;
+  return sold;
 });
 
+/**
+ * Trust score, shown only when there is something behind it.
+ *
+ * A brand-new account with no reviews is not a 5.0; it is unrated, and saying otherwise misleads the buyer.
+ */
 const trustRatingDisplay = computed(() => {
-  const rating = profileUser.value?.rating;
-  if (rating && rating > 0) return Number(rating).toFixed(1);
-  return '5.0';
+  const rating = Number(profileUser.value?.rating || 0);
+  const reviews = Number(profileUser.value?.totalReviews || profileUser.value?.reviewCount || 0);
+
+  if (!rating || reviews === 0) return 'New';
+  return rating.toFixed(1);
 });
 
 const bioDisplay = computed(() => {
@@ -433,6 +472,15 @@ const loadProfileData = async () => {
     // 2. Fetch user's listings
     try {
       const itemsRes = await itemsApi.list({ sellerId: id, limit: 30 });
+
+      // What this student has liked, which the page used to declare private without asking.
+      try {
+        const likedRes: any = await itemsApi.list({ likedBy: id, limit: 30 });
+        const likedBody = likedRes?.data;
+        likedItems.value = Array.isArray(likedBody) ? likedBody : (likedBody?.data || likedBody?.items || []);
+      } catch {
+        likedItems.value = [];
+      }
       const itemsData = itemsRes?.data?.data || itemsRes?.data || [];
       userItems.value = Array.isArray(itemsData) ? itemsData : [];
     } catch {

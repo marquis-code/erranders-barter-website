@@ -1071,32 +1071,32 @@ const heroPhrases = [
   {
     lang: 'English',
     line1: "Sell what you don't need.",
-    line2: 'Get paid fast.',
-    sub: 'Buy, sell, or swap room essentials with verified students on your campus. Your money is held until you both agree, so nobody is left guessing.',
+    line2: 'Get paid fast. 💸',
+    sub: 'Buy, sell, or swap room essentials with verified students on your campus. Your money is held until you both agree, so nobody is left guessing. 🧡',
   },
   {
     lang: 'Pidgin',
     line1: 'Sell wetin you no need.',
-    line2: 'Collect your money sharp-sharp.',
-    sub: 'Buy, sell or swap room things with verified students for your campus. Your money dey safe until una two agree. No story, no wahala.',
+    line2: 'Collect your money sharp-sharp. 💸🔥',
+    sub: 'Buy, sell or swap room things with verified students for your campus. Your money dey safe until una two agree. No story, no wahala! 🛵💨',
   },
   {
     lang: 'Yorùbá',
     line1: 'Ta ohun tí o kò nílò.',
-    line2: 'Gba owó rẹ kíákíá.',
-    sub: 'Ra, ta, tàbí pààrọ̀ àwọn nkan yàrá pẹ̀lú àwọn akẹ́kọ̀ọ́ tí a fọwọ́ sí. Owó rẹ wà ní ààbò títí ẹ̀yin méjèèjì yóò fi gbà.',
+    line2: 'Gba owó rẹ kíákíá. 💸',
+    sub: 'Ra, ta, tàbí pààrọ̀ àwọn nkan yàrá pẹ̀lú àwọn akẹ́kọ̀ọ́ tí a fọwọ́ sí. Owó rẹ wà ní ààbò títí ẹ̀yin méjèèjì yóò fi gbà. 🤝',
   },
   {
     lang: 'Igbo',
     line1: 'Ree ihe ị chọghị.',
-    line2: 'Nweta ego gị ngwa ngwa.',
-    sub: 'Zụọ, ree, ma ọ bụ gbanwee ihe ụlọ gị na ụmụ akwụkwọ e nyochara. Ego gị dị nchebe ruo mgbe unu abụọ kwekọrịtara.',
+    line2: 'Nweta ego gị ngwa ngwa. 💸',
+    sub: 'Zụọ, ree, ma ọ bụ gbanwee ihe ụlọ gị na ụmụ akwụkwọ e nyochara. Ego gị dị nchebe ruo mgbe unu abụọ kwekọrịtara. 📦',
   },
   {
     lang: 'Hausa',
     line1: 'Sayar da abin da ba ka bukata.',
-    line2: 'Karɓi kuɗinka da sauri.',
-    sub: 'Saya, sayar, ko musanya kayan ɗaki da ɗaliban da aka tabbatar. Kudinka yana cikin aminci har sai kun amince.',
+    line2: 'Karɓi kuɗinka da sauri. 💸',
+    sub: 'Saya, sayar, ko musanya kayan ɗaki da ɗaliban da aka tabbatar. Kudinka yana cikin aminci har sai kun amince. 🤝',
   },
 ];
 
@@ -1748,6 +1748,8 @@ onUnmounted(() => {
 
 .hero-title {
   margin: 0;
+  /* Emoji sit inside the headline; give them a stack that draws pictures rather than monochrome glyphs. */
+  font-family: 'Inter', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
   font-size: clamp(38px, 7vw, 68px);
   line-height: 1.02;
   font-weight: 800;

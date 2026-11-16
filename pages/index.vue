@@ -14,14 +14,13 @@
           </div>
           -->
 
-          <h1 class="hero-title">
-            Sell what you don't need.<br />
-            <span class="mark">Get paid fast.</span>
+          <h1 :key="heroPhraseIndex" class="hero-title swap">
+            {{ heroPhrase.line1 }}<br />
+            <span class="mark">{{ heroPhrase.line2 }}</span>
           </h1>
 
-          <p class="hero-sub">
-            Buy, sell, or swap room essentials with verified students on your campus. Your money is held
-            until you both agree, so nobody is left guessing.
+          <p :key="'s-' + heroPhraseIndex" class="hero-sub swap">
+            {{ heroPhrase.sub }}
           </p>
 
           <!-- What you can do here -->
@@ -1041,7 +1040,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref, computed } from 'vue';
+import { onMounted, onUnmounted, onBeforeUnmount, reactive, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   Search, ShoppingBag, Tag, Package, ShieldCheck, MapPin, Clock, ArrowRight, ArrowRightLeft,
@@ -1060,6 +1059,56 @@ useSeoMeta({
 
 const router = useRouter();
 const searchInput = ref('');
+
+/**
+ * The hero speaks the four languages this campus actually mixes. Each message is whole: the two lines
+ * of the headline, the accent on the second, and one sentence of explanation.
+ *
+ * These were written rather than translated by a native speaker, so a pass from someone who speaks
+ * each one would be worth doing before this is treated as final copy.
+ */
+const heroPhrases = [
+  {
+    lang: 'Pidgin',
+    line1: "Sell wetin you no need.",
+    line2: 'Collect your money sharp-sharp!',
+    sub: 'Buy, sell or swap room things with verified students for your campus. Your money dey safe until una two agree. No story, no wahala.',
+  },
+  {
+    lang: 'Yorùbá',
+    line1: 'Ta ohun tí o ò nílò.',
+    line2: 'Gbà owó rẹ kíákíá!',
+    sub: 'Ra, ta, tàbí pààrọ̀ àwọn nkan yàrá pẹ̀lú àwọn akẹ́kọ̀ọ́ tí a fọwọ́ sí. Owó rẹ wà ní ààbò títí ẹ̀yin méjèèjì yóò fi gbà.',
+  },
+  {
+    lang: 'Igbo',
+    line1: 'Ree ihe ị na-achọghị.',
+    line2: 'Nweta ego gị ngwa ngwa!',
+    sub: 'Zụọ, ree, ma ọ bụ gbanwee ihe ụlọ gị na ụmụ akwụkwọ e nyochara. Ego gị dị nchebe ruo mgbe unu abụọ kwekọrịtara.',
+  },
+  {
+    lang: 'Hausa',
+    line1: 'Sayar da abin da ba ka bukata.',
+    line2: 'Karbi kudinka da sauri!',
+    sub: 'Saya, sayar, ko musanya kayan ɗaki da ɗaliban da aka tabbatar. Kudinka yana cikin aminci har sai kun amince.',
+  },
+];
+
+const heroPhraseIndex = ref(0);
+const heroPhrase = computed(() => heroPhrases[heroPhraseIndex.value % heroPhrases.length]);
+let phraseTimer: ReturnType<typeof setInterval> | null = null;
+
+onMounted(() => {
+  if (typeof window === 'undefined') return;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  phraseTimer = setInterval(() => {
+    heroPhraseIndex.value = (heroPhraseIndex.value + 1) % heroPhrases.length;
+  }, 6000);
+});
+
+onBeforeUnmount(() => {
+  if (phraseTimer) clearInterval(phraseTimer);
+});
 const activeCategory = ref('all');
 
 const campusStats = ref({
@@ -1666,9 +1715,15 @@ onUnmounted(() => {
 
 /* ── Hero ── */
 .hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* The hero owns the first screen: the viewport, less the fixed navigation. */
+  min-height: 100vh;
+  min-height: 100svh;
   max-width: 1240px;
   margin: 0 auto;
-  padding: 116px 20px 28px;
+  padding: 118px 20px 40px;
 }
 
 .hero-inner {
@@ -1934,6 +1989,27 @@ onUnmounted(() => {
   height: 17px;
   color: #1f8f4e;
   flex: none;
+}
+
+.swap {
+  animation: rise 0.5s ease both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swap {
+    animation: none;
+  }
 }
 
 @media (max-width: 599px) {

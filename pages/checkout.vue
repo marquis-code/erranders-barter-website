@@ -705,8 +705,11 @@ const concludeNegotiationAndTriggerPaystack = async () => {
 
     handler.openIframe()
   } catch (err) {
-    error.value = 'Failed to finalize negotiation.'
-    console.error(err)
+    // Say what actually broke. The generic message sent people back to retry a negotiation that had already
+    // been accepted, and told us nothing about the cause.
+    const detail = (err && (err.message || err.reason || err.error)) || 'unknown error'
+    error.value = `Could not open the payment window: ${detail}`
+    console.error('[checkout] conclude failed:', err)
     initiating.value = false
   }
 }

@@ -386,12 +386,6 @@ const item = ref(null)
 const bundleData = ref(null)
 const bundleItems = ref([])
 
-useHead({
-  script: [
-    { src: 'https://js.paystack.co/v1/inline.js', async: true }
-  ]
-})
-
 useSeoMeta({
   title: computed(() => item.value ? `Checkout: ${item.value.title} | Decluttered` : 'Checkout | Decluttered'),
   description: 'Secure checkout via Decluttered Escrow with live Errand Ninja campus delivery dispatch.',
@@ -612,110 +606,38 @@ const sendCounterNegotiation = async () => {
   }
 }
 
-/** Wait for the Paystack inline script, so a slow load does not look like a failed negotiation. */
-const loadPaystackScript = () =>
-  new Promise((resolve) => {
-    if (typeof window === 'undefined') return resolve(false)
-    if (window.PaystackPop) return resolve(true)
-
-    const existing = document.querySelector('script[src*="paystack"]')
-    if (existing) {
-      existing.addEventListener('load', () => resolve(Boolean(window.PaystackPop)))
-      existing.addEventListener('error', () => resolve(false))
-      setTimeout(() => resolve(Boolean(window.PaystackPop)), 5000)
-      return
-    }
-
-    const script = document.createElement('script')
-    script.src = 'https://js.paystack.co/v1/inline.js'
-    script.async = true
-    script.onload = () => resolve(Boolean(window.PaystackPop))
-    script.onerror = () => resolve(false)
-    document.head.appendChild(script)
-  })
-
-// 2. Conclude Negotiation & Trigger Paystack for payment
+// 2. Conclude the negotiation, then hand the payment to Paystack on the server
 const concludeNegotiationAndTriggerPaystack = async () => {
   if (!activeNegotiationTx.value) return
   initiating.value = true
   error.value = ''
 
   try {
-    // Conclude negotiation
-    const { data: acceptData, error: acceptError } = await escrowApi.acceptNegotiation(activeNegotiationTx.value._id)
-    if (acceptError) {
-      // If no negotiation existed to accept, fallback to current agreed fee
-      console.warn('Accept negotiation notice:', acceptError)
-    }
+    // Concluding is harmless to repeat: the backend treats an already-concluded fee as a no-op.
+    const { error: acceptError } = await escrowApi.acceptNegotiation(activeNegotiationTx.value._id)
+    if (acceptError) console.warn('Accept negotiation notice:', acceptError)
 
-    const finalFee = acceptData?.concludedFee || currentConcludedFee.value
-    const finalAmount = totalAmount.value
-
-    const runtimeConfig = useRuntimeConfig()
-    const paystackKey = runtimeConfig.public.paystackPublicKey
-
-    // The modal cannot open without the script or a key, and the failure used to read "Failed to finalize
-    // negotiation" — which sent people back to retry a negotiation that had already succeeded.
-    await loadPaystackScript()
-    if (!paystackKey) {
-      error.value =
-        'Card payment is not configured on this site yet. Nothing was charged, and the negotiation has been saved.'
-      initiating.value = false
-      return
-    }
-    if (!window.PaystackPop) {
-      error.value =
-        'The payment window could not load. Check your connection, or refresh and try again. Nothing was charged.'
+    // The charge is built server-side: amount, reference and callback all come from the backend, so this page
+    // cannot be edited into paying a different amount.
+    const { data, error: initError } = await escrowApi.initializePayment(activeNegotiationTx.value._id)
+    if (initError || !data?.authorizationUrl) {
+      error.value = initError || data?.message || 'The payment could not be started. Nothing was charged.'
       initiating.value = false
       return
     }
 
-    const handler = window.PaystackPop.setup({
-      key: paystackKey,
-      email: user.value?.email || 'customer@erranders.org',
-      amount: Math.round(finalAmount * 100), // in kobo
-      currency: 'NGN',
-      ref: 'ESCROW_' + Math.floor((Math.random() * 1000000000) + 1),
-      callback: async (response) => {
-        try {
-          const { error: confirmErr } = await escrowApi.confirmPayment(activeNegotiationTx.value._id, {
-            paymentReference: response.reference,
-            negotiatedFee: finalFee
-          })
-          if (confirmErr) {
-            error.value = confirmErr
-            initiating.value = false
-          } else {
-            useCustomToast().showToast({
-              title: 'Payment Confirmed! 🚀',
-              message: 'Custom Errand delivery is active! Track progress in Escrow.',
-              toastType: 'success'
-            })
-            router.push('/escrow')
-          }
-        } catch (err) {
-          error.value = 'Failed to confirm payment on escrow.'
-          initiating.value = false
-        }
-      },
-      onClose: () => {
-        initiating.value = false
-      }
-    })
-
-    handler.openIframe()
+    // Paystack's own hosted page. On return it lands on /payment/callback, which verifies the reference.
+    window.location.href = data.authorizationUrl
   } catch (err) {
-    // Say what actually broke. The generic message sent people back to retry a negotiation that had already
-    // been accepted, and told us nothing about the cause.
     const detail = (err && (err.message || err.reason || err.error)) || 'unknown error'
-    error.value = `Could not open the payment window: ${detail}`
+    error.value = `The payment could not be started: ${detail}`
     console.error('[checkout] conclude failed:', err)
     initiating.value = false
   }
 }
 
 // 3. Direct Paystack Checkout for Self Pickup (No delivery negotiation needed)
-const handleDirectPaystackCheckout = () => {
+const handleDirectPaystackCheckout = async () => {
   if (!isLoggedIn.value) {
     isGlobalAuthModalOpen.value = true
     return
@@ -724,24 +646,40 @@ const handleDirectPaystackCheckout = () => {
   initiating.value = true
   error.value = ''
 
-  const runtimeConfig = useRuntimeConfig()
-  const paystackKey = runtimeConfig.public.paystackPublicKey
-
-  const handler = window.PaystackPop.setup({
-    key: paystackKey,
-    email: user.value?.email || 'customer@erranders.org',
-    amount: Math.round(totalAmount.value * 100),
-    currency: 'NGN',
-    ref: 'ESCROW_' + Math.floor((Math.random() * 1000000000) + 1),
-    callback: function(response) {
-      initiateEscrow(response.reference)
-    },
-    onClose: function(){
-      initiating.value = false
+  try {
+    const payload = {
+      sellerId: item.value.sellerId?._id || item.value.sellerId,
+      itemId: item.value._id,
+      batchId: route.query.batchId ? String(route.query.batchId) : undefined,
+      amount: totalAmount.value,
+      deliveryMethod: 'pickup',
+      deliveryAddress: 'Self Pickup on Campus',
+      deliveryFee: 0,
+      notes: deliveryNotes.value || undefined,
     }
-  })
 
-  handler.openIframe()
+    // Create the trade first, then let the server start the charge for it.
+    const { data: created, error: apiError } = await escrowApi.initiate(payload)
+    if (apiError || !created) {
+      error.value = apiError || 'The order could not be created. Nothing was charged.'
+      initiating.value = false
+      return
+    }
+
+    const txId = created._id || created.transaction?._id || created.data?._id
+    const { data, error: initError } = await escrowApi.initializePayment(String(txId))
+    if (initError || !data?.authorizationUrl) {
+      error.value = initError || 'The payment could not be started. Nothing was charged.'
+      initiating.value = false
+      return
+    }
+
+    window.location.href = data.authorizationUrl
+  } catch (err) {
+    error.value = `The payment could not be started: ${(err && err.message) || 'unknown error'}`
+    console.error('[checkout] direct pay failed:', err)
+    initiating.value = false
+  }
 }
 
 const initiateEscrow = async (paymentRef) => {

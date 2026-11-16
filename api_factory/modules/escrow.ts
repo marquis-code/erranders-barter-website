@@ -10,6 +10,9 @@ export const escrowApi = {
   getTransaction: (txId: string) => GATEWAY_ENDPOINT.get(`/escrow/${txId}`),
   release: (txId: string) => GATEWAY_ENDPOINT.patch(`/escrow/${txId}/release`),
   dispute: (txId: string) => GATEWAY_ENDPOINT.patch(`/escrow/${txId}/dispute`),
+  /** Server-side Paystack: returns the authorisation URL to send the buyer to. */
+  initializePayment: (txId: string) => GATEWAY_ENDPOINT.post(`/escrow/${txId}/initialize-payment`),
+
   acceptNegotiation: (txId: string) => GATEWAY_ENDPOINT.patch(`/escrow/${txId}/accept-negotiation`),
   counterNegotiation: (txId: string, amount: number) => GATEWAY_ENDPOINT.patch(`/escrow/${txId}/counter-negotiation`, { amount }),
   myTransactions: () => GATEWAY_ENDPOINT.get('/escrow/my-transactions')

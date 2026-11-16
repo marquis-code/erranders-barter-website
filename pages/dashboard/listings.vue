@@ -125,9 +125,65 @@
                 <input :value="priceDisplay" inputmode="numeric" :disabled="form.type === 'swap'" @input="onPrice" />
               </label>
 
-              <label class="field">
+              <!-- Condition is a choice, as it is when posting. -->
+              <div class="field">
                 <span class="flabel">Condition</span>
-                <input v-model="form.condition" type="text" placeholder="Good, used, new" />
+                <div class="pick">
+                  <button type="button" class="pick-trigger" :aria-expanded="conditionOpen" @click="conditionOpen = !conditionOpen">
+                    <span :class="{ placeholder: !form.condition }">{{ form.condition || 'Choose condition' }}</span>
+                    <ChevronDown class="w-4 h-4" />
+                  </button>
+                  <div v-if="conditionOpen" class="pick-menu">
+                    <button
+                      v-for="c in conditions"
+                      :key="c"
+                      type="button"
+                      class="pick-option"
+                      :class="{ on: form.condition === c }"
+                      @click="form.condition = c; conditionOpen = false"
+                    >
+                      {{ c }}
+                      <Check v-if="form.condition === c" class="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Photos and video, changeable after posting -->
+            <div class="field">
+              <span class="flabel">Photos</span>
+              <div class="media-grid">
+                <div v-for="(img, i) in form.images" :key="'img-' + i" class="media-thumb">
+                  <img :src="img" alt="" />
+                  <button type="button" class="media-x" aria-label="Remove photo" @click="form.images.splice(i, 1)">
+                    <X class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <label v-if="form.images.length < 5" class="media-add">
+                  <ImagePlus class="w-5 h-5" />
+                  <span>{{ uploading === 'image' ? 'Uploading…' : 'Add' }}</span>
+                  <input type="file" accept="image/*" multiple class="hidden-input" :disabled="!uploading" @change="onImagePick" />
+                </label>
+              </div>
+              <span v-if="mediaError" class="media-error">{{ mediaError }}</span>
+            </div>
+
+            <div class="field">
+              <span class="flabel">Video (optional)</span>
+              <div v-if="form.videos.length" class="media-grid">
+                <div v-for="(v, i) in form.videos" :key="'vid-' + i" class="media-thumb wide">
+                  <video :src="v" class="w-full h-full object-cover" muted playsinline controls />
+                  <button type="button" class="media-x" aria-label="Remove video" @click="form.videos.splice(i, 1)">
+                    <X class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+              <label v-else class="media-add wide">
+                <Video class="w-5 h-5" />
+                <span>{{ uploading === 'video' ? 'Uploading…' : 'Add a video' }}</span>
+                <input type="file" accept="video/*" class="hidden-input" :disabled="!!uploading" @change="onVideoPick" />
               </label>
             </div>
 
@@ -176,9 +232,10 @@
 </template>
 
 <script setup>
-import { Plus, PackageX, MapPin, Pencil, Trash2, LayoutGrid, List } from 'lucide-vue-next'
+import { Plus, PackageX, MapPin, Pencil, Trash2, LayoutGrid, List, ChevronDown, Check, X, ImagePlus, Video } from 'lucide-vue-next'
 import { ref, computed, onMounted } from 'vue'
 import { itemsApi } from '~/composables/useApi'
+import { upload_api } from '~/api_factory/modules/upload'
 
 definePageMeta({ layout: 'dashboard' })
 useSeoMeta({ title: 'My Active Listings | Decluttered by Erranders' })
@@ -215,7 +272,22 @@ const fetchListings = async () => {
 const editing = ref(null)
 const saving = ref(false)
 const formError = ref('')
-const form = ref({ title: '', price: 0, condition: '', location: '', description: '', type: 'sell' })
+const form = ref({
+  title: '',
+  price: 0,
+  condition: '',
+  location: '',
+  description: '',
+  type: 'sell',
+  images: [],
+  videos: [],
+})
+
+/** Same four the create form offers, so editing cannot invent a fifth condition. */
+const conditions = ['Brand New', 'Like New', 'Good', 'Fair']
+const conditionOpen = ref(false)
+const uploading = ref('')
+const mediaError = ref('')
 
 const priceDisplay = computed(() => {
   const n = Number(form.value.price)
@@ -237,9 +309,48 @@ const openEdit = (item) => {
     location: item.location || '',
     description: item.description || '',
     type: item.type || 'sell',
+    images: Array.isArray(item.images) ? [...item.images] : [],
+    videos: Array.isArray(item.videos) ? [...item.videos] : [],
   }
+  conditionOpen.value = false
+  mediaError.value = ''
   editing.value = item
 }
+
+/** Upload straight to Cloudinary through the backend, then hold the URL until Save. */
+const uploadOne = async (file, kind) => {
+  uploading.value = kind;
+  mediaError.value = '';
+  try {
+    const res = await upload_api.uploadFile(file, kind);
+    const url = res?.data?.url || res?.url || res?.data?.secure_url;
+    if (!url) throw new Error('no url');
+    return url;
+  } catch (e) {
+    mediaError.value = e?.response?.data?.message || 'That file could not be uploaded';
+    return null;
+  } finally {
+    uploading.value = '';
+  }
+};
+
+const onImagePick = async (e) => {
+  const files = Array.from(e.target.files || []).slice(0, 5 - form.value.images.length);
+  for (const file of files) {
+    const url = await uploadOne(file, 'image');
+    if (url) form.value.images.push(url);
+  }
+  e.target.value = '';
+};
+
+const onVideoPick = async (e) => {
+  const file = e.target.files?.[0];
+  if (file) {
+    const url = await uploadOne(file, 'video');
+    if (url) form.value.videos.push(url);
+  }
+  e.target.value = '';
+};
 
 const saveEdit = async () => {
   if (!editing.value) return
@@ -252,6 +363,8 @@ const saveEdit = async () => {
       condition: form.value.condition,
       location: form.value.location.trim(),
       description: form.value.description,
+      images: form.value.images,
+      videos: form.value.videos,
     })
     // Update in place, so the list does not jump while someone is editing.
     const updated = data?.item || data
@@ -482,6 +595,152 @@ onMounted(() => {
 .error {
   margin: 0;
   font-size: 13.5px;
+  font-weight: 650;
+  color: #b91c1c;
+}
+
+/* Condition picker inside the dialog */
+.pick {
+  position: relative;
+}
+
+.pick-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d9d5cd;
+  background: #fff;
+  color: #0f172a;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pick-trigger .placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.pick-trigger[aria-expanded='true'] {
+  border-color: #ff5c1a;
+}
+
+.pick-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 5px);
+  z-index: 20;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid #e2ded6;
+  background: #fff;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.14);
+}
+
+.pick-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-bottom: 1px solid #f1f5f9;
+  background: transparent;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pick-option:last-child {
+  border-bottom: 0;
+}
+
+.pick-option:hover {
+  background: #fff7ed;
+}
+
+.pick-option.on {
+  color: #ff5c1a;
+  font-weight: 750;
+}
+
+/* Media */
+.media-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.media-thumb {
+  position: relative;
+  width: 74px;
+  height: 74px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e2ded6;
+  background: #f8fafc;
+}
+
+.media-thumb.wide {
+  width: 132px;
+}
+
+.media-x {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+  cursor: pointer;
+}
+
+.media-add {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  width: 74px;
+  height: 74px;
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+
+.media-add.wide {
+  width: 132px;
+  height: 74px;
+}
+
+.media-add:hover {
+  border-color: #ff5c1a;
+  color: #ff5c1a;
+}
+
+.hidden-input {
+  display: none;
+}
+
+.media-error {
+  margin-top: 6px;
+  font-size: 12.5px;
   font-weight: 650;
   color: #b91c1c;
 }

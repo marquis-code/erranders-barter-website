@@ -1069,27 +1069,33 @@ const searchInput = ref('');
  */
 const heroPhrases = [
   {
+    lang: 'English',
+    line1: "Sell what you don't need.",
+    line2: 'Get paid fast.',
+    sub: 'Buy, sell, or swap room essentials with verified students on your campus. Your money is held until you both agree, so nobody is left guessing.',
+  },
+  {
     lang: 'Pidgin',
-    line1: "Sell wetin you no need.",
-    line2: 'Collect your money sharp-sharp!',
+    line1: 'Sell wetin you no need.',
+    line2: 'Collect your money sharp-sharp.',
     sub: 'Buy, sell or swap room things with verified students for your campus. Your money dey safe until una two agree. No story, no wahala.',
   },
   {
     lang: 'Yorùbá',
-    line1: 'Ta ohun tí o ò nílò.',
-    line2: 'Gbà owó rẹ kíákíá!',
+    line1: 'Ta ohun tí o kò nílò.',
+    line2: 'Gba owó rẹ kíákíá.',
     sub: 'Ra, ta, tàbí pààrọ̀ àwọn nkan yàrá pẹ̀lú àwọn akẹ́kọ̀ọ́ tí a fọwọ́ sí. Owó rẹ wà ní ààbò títí ẹ̀yin méjèèjì yóò fi gbà.',
   },
   {
     lang: 'Igbo',
-    line1: 'Ree ihe ị na-achọghị.',
-    line2: 'Nweta ego gị ngwa ngwa!',
+    line1: 'Ree ihe ị chọghị.',
+    line2: 'Nweta ego gị ngwa ngwa.',
     sub: 'Zụọ, ree, ma ọ bụ gbanwee ihe ụlọ gị na ụmụ akwụkwọ e nyochara. Ego gị dị nchebe ruo mgbe unu abụọ kwekọrịtara.',
   },
   {
     lang: 'Hausa',
     line1: 'Sayar da abin da ba ka bukata.',
-    line2: 'Karbi kudinka da sauri!',
+    line2: 'Karɓi kuɗinka da sauri.',
     sub: 'Saya, sayar, ko musanya kayan ɗaki da ɗaliban da aka tabbatar. Kudinka yana cikin aminci har sai kun amince.',
   },
 ];

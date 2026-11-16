@@ -29,7 +29,13 @@ export const useRealtimeSocket = () => {
       // Fallback if useRuntimeConfig is somehow unavailable
       rawUrl = (import.meta.env?.VITE_WS_URL || import.meta.env?.VITE_BASE_URL || import.meta.env?.VITE_API_BASE_URL || rawUrl) as string
     }
-    const baseUrl = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl
+    let baseUrl = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl
+
+    // A localhost default from a production build points at the visitor's own machine.
+    if (/localhost|127\.0\.0\.1/.test(baseUrl) && typeof window !== 'undefined' && !/localhost|127\.0\.0\.1/.test(window.location.hostname)) {
+      baseUrl = 'https://barter-backend-api.erranders.org'
+    }
+    baseUrl = baseUrl.replace(/\/api\/v1\/?$/, '')
     isConnecting.value = true
 
     const authPayload: any = {
@@ -41,7 +47,7 @@ export const useRealtimeSocket = () => {
     const { user } = useUser()
     if (user.value?._id) authPayload.userId = user.value._id
 
-    socket.value = io(`${baseUrl}/realtime`, {
+    socket.value = io(baseUrl, {
       path: '/socket.io/',
       transports: ['polling'],
       auth: authPayload,

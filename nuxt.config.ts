@@ -57,7 +57,12 @@ export default defineNuxtConfig({
         process.env.VITE_API_BASE_URL ||
         (process.env.NODE_ENV === 'production' ? 'https://barter-backend-api.erranders.org/api/v1' : 'http://localhost:3100/api/v1'),
       apiBase: process.env.VITE_API_BASE_URL || 'http://localhost:3100/api/v1',
-      wsBase: process.env.WS_BASE_URL || process.env.VITE_WS_URL || 'http://localhost:3100',
+      wsBase:
+        process.env.WS_BASE_URL ||
+        process.env.VITE_WS_URL ||
+        (process.env.NODE_ENV === 'production'
+          ? 'https://barter-backend-api.erranders.org'
+          : 'http://localhost:3100'),
       // Every business gets `<business-name>.erranders.org`.
       //
       // The middleware only treats a host as a tenant when it ends in this apex AND the

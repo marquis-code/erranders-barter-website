@@ -83,41 +83,30 @@
           <p class="hero-note">Campus deals from verified students.</p>
         </div>
 
-        <!-- Right: the same idea as tickets, at the sizes people actually sell -->
+        <!-- Right: the same idea as tickets, changing with the language -->
         <div class="hero-art" aria-hidden="true">
-          <div class="ticket ticket-s">
-            <div class="ticket-top tone-blue"><span>S</span></div>
+          <div
+            v-for="(ticket, i) in currentTickets.items"
+            :key="`${heroPhraseIndex}-${i}`"
+            class="ticket swap"
+            :class="['ticket-' + ['s', 'm', 't'][i], ticket.tone]"
+          >
+            <div class="ticket-top">
+              <span>{{ ticket.size }}</span>
+            </div>
             <div class="ticket-body">
-              <p class="t-title">Standing fan</p>
-              <p class="t-meta">Block 4 · Good condition</p>
-              <p class="t-price">₦12,000</p>
+              <p class="t-title">{{ ticket.title }}</p>
+              <p class="t-meta">{{ ticket.meta }}</p>
+              <p class="t-price">{{ ticket.price }}</p>
             </div>
           </div>
 
-          <div class="ticket ticket-m">
-            <div class="ticket-top tone-green"><span>M</span></div>
-            <div class="ticket-body">
-              <p class="t-title">Mini fridge</p>
-              <p class="t-meta">Used for 1 year</p>
-              <p class="t-price">₦45,000</p>
-            </div>
-          </div>
-
-          <div class="ticket ticket-t">
-            <div class="ticket-top tone-purple"><span>T</span></div>
-            <div class="ticket-body">
-              <p class="t-title">Textbook bundle</p>
-              <p class="t-meta">300L Medicine</p>
-              <p class="t-price">₦8,000</p>
-            </div>
-          </div>
-
-          <div class="ticket ticket-held">
+          <div :key="`held-${heroPhraseIndex}`" class="ticket ticket-held swap">
             <div class="held-top">
               <p class="held-label"><span class="held-dot" aria-hidden="true"></span> Held safely</p>
               <p class="held-body">Released when you both agree</p>
             </div>
-            <div class="held-stub">₦12,000</div>
+            <div class="held-stub">{{ currentTickets.held }}</div>
           </div>
         </div>
       </div>
@@ -1137,8 +1126,64 @@ const heroPhrases = [
   },
 ];
 
+/**
+ * The tickets that sit beside the words.
+ *
+ * Each language gets its own set, and the sets move through the three things you can do here: buy
+ * something small and cheap, buy something large, swap rather than buy. The last ticket is always the
+ * held payment, because that is the promise under everything else.
+ */
+const ticketSets = [
+  {
+    // English: three ordinary things, priced to show the range.
+    held: '₦12,000',
+    items: [
+      { size: 'S', tone: 'tone-blue', title: 'Standing fan', meta: 'Block 4 · Good condition', price: '₦12,000' },
+      { size: 'M', tone: 'tone-green', title: 'Mini fridge', meta: 'Used for 1 year', price: '₦45,000' },
+      { size: 'T', tone: 'tone-purple', title: 'Textbook bundle', meta: '300L Medicine', price: '₦8,000' },
+    ],
+  },
+  {
+    // Pidgin: small things that move fast.
+    held: '₦6,500',
+    items: [
+      { size: 'S', tone: 'tone-blue', title: 'Electric kettle', meta: 'Block 2 · Works fine', price: '₦6,500' },
+      { size: 'M', tone: 'tone-green', title: 'Reading table', meta: 'Slight scratch', price: '₦18,000' },
+      { size: 'T', tone: 'tone-purple', title: 'Lab coat', meta: '400L · Size M', price: '₦3,000' },
+    ],
+  },
+  {
+    // Yoruba: furniture and bedding, the things a room fills up with.
+    held: '₦22,000',
+    items: [
+      { size: 'S', tone: 'tone-blue', title: 'Bedside lamp', meta: 'Block 7 · Like new', price: '₦5,000' },
+      { size: 'M', tone: 'tone-green', title: 'Mattress', meta: 'Single · 6 months', price: '₦22,000' },
+      { size: 'T', tone: 'tone-purple', title: 'Bedsheet set', meta: 'Two pairs', price: '₦4,500' },
+    ],
+  },
+  {
+    // Igbo: study gear, the swap-heavy category.
+    held: '₦9,000',
+    items: [
+      { size: 'S', tone: 'tone-blue', title: 'Desk organiser', meta: 'Block 1 · Good condition', price: '₦2,500' },
+      { size: 'M', tone: 'tone-green', title: 'Study chair', meta: 'Used for 2 years', price: '₦15,000' },
+      { size: 'T', tone: 'tone-purple', title: 'Stethoscope', meta: '300L · Working', price: '₦9,000' },
+    ],
+  },
+  {
+    // Hausa: kitchen things and a fan, sold as the room empties.
+    held: '₦7,000',
+    items: [
+      { size: 'S', tone: 'tone-blue', title: 'Hot plate', meta: 'Block 3 · Works fine', price: '₦7,000' },
+      { size: 'M', tone: 'tone-green', title: 'Standing fan', meta: 'Used for 1 year', price: '₦14,000' },
+      { size: 'T', tone: 'tone-purple', title: 'Cooking set', meta: 'Pots and pans', price: '₦11,000' },
+    ],
+  },
+];
+
 const heroPhraseIndex = ref(0);
 const heroPhrase = computed(() => heroPhrases[heroPhraseIndex.value % heroPhrases.length]);
+const currentTickets = computed(() => ticketSets[heroPhraseIndex.value % ticketSets.length]);
 let phraseTimer: ReturnType<typeof setInterval> | null = null;
 
 onMounted(() => {
@@ -1992,9 +2037,9 @@ onUnmounted(() => {
   letter-spacing: 0.02em;
 }
 
-.tone-blue { background: #2f6fa8; }
-.tone-green { background: #3c7a4e; }
-.tone-purple { background: #8b3a86; }
+.tone-blue .ticket-top { background: #2f6fa8; }
+.tone-green .ticket-top { background: #3c7a4e; }
+.tone-purple .ticket-top { background: #8b3a86; }
 
 .ticket-body {
   padding: 12px 14px 14px;

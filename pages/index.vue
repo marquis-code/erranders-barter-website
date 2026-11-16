@@ -39,8 +39,45 @@
               type="text"
               aria-label="Search campus listings"
               placeholder="Search fans, mini-fridges, textbooks, mattresses"
+              @focus="showResults = true"
             />
             <button type="submit" class="search-go">Search</button>
+
+            <!-- What matches, while you type, split by what can be done with it. -->
+            <div v-if="showResults && searchInput.trim().length >= 2" class="results">
+              <template v-if="results.length">
+                <div class="result-group" v-for="group in resultGroups" :key="group.type">
+                  <p class="result-head">{{ group.label }}</p>
+                  <NuxtLink
+                    v-for="item in group.items"
+                    :key="item._id"
+                    :to="`/item/${item._id}`"
+                    class="result"
+                    @click="showResults = false"
+                  >
+                    <span class="result-thumb">
+                      <img v-if="item.images?.[0]" :src="item.images[0]" alt="" loading="lazy" />
+                    </span>
+                    <span class="result-text">
+                      <span class="result-title">{{ item.title }}</span>
+                      <span class="result-meta">
+                        {{ item.condition || 'Used' }} · {{ item.location || 'Campus' }}
+                      </span>
+                    </span>
+                    <span class="result-price">₦{{ Number(item.price || 0).toLocaleString() }}</span>
+                  </NuxtLink>
+                </div>
+
+                <button type="button" class="result-all" @click="submitSearch">
+                  See all results for "{{ searchInput.trim() }}"
+                </button>
+              </template>
+
+              <p v-else class="result-empty">
+                Nothing listed for "{{ searchInput.trim() }}". Try a shorter word, or
+                <NuxtLink to="/sell">list it yourself</NuxtLink>.
+              </p>
+            </div>
           </form>
 
           <p class="hero-note">Campus deals from verified students.</p>
@@ -1586,7 +1623,67 @@ const selectCategoryTab = (tabId: string) => {
   }
 };
 
+/**
+ * Everything listed, fetched once and filtered here.
+ *
+ * A request per keystroke would be slower than the typing and would hammer the API for a dropdown nobody
+ * has finished typing into yet. The catalogue is small enough to hold.
+ */
+const allItems = ref<any[]>([]);
+const showResults = ref(false);
+
+const loadForSearch = async () => {
+  if (allItems.value.length) return;
+  try {
+    const res = await itemsApi.list({});
+    const body: any = res?.data || res;
+    allItems.value = Array.isArray(body) ? body : body.items || body.data || [];
+  } catch {
+    allItems.value = [];
+  }
+};
+
+const results = computed(() => {
+  const term = searchInput.value.trim().toLowerCase();
+  if (term.length < 2) return [];
+  return allItems.value
+    .filter((i: any) => {
+      const hay = `${i.title || ''} ${i.category || ''} ${i.description || ''}`.toLowerCase();
+      return hay.includes(term);
+    })
+    .slice(0, 8);
+});
+
+/** Buy, swap and sell are the same row of data seen three ways, so the panel groups by type. */
+const resultGroups = computed(() => {
+  const groups = [
+    { type: 'sell', label: 'To buy', items: [] as any[] },
+    { type: 'swap', label: 'To swap', items: [] as any[] },
+    { type: 'service', label: 'Services', items: [] as any[] },
+  ];
+  for (const item of results.value) {
+    const key = item.type === 'service' ? 'service' : item.type === 'swap' ? 'swap' : 'sell';
+    groups.find((g) => g.type === key)?.items.push(item);
+  }
+  return groups.filter((g) => g.items.length);
+});
+
+onMounted(() => {
+  loadForSearch();
+  document.addEventListener('click', closeOnOutsideClick);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeOnOutsideClick);
+});
+
+const closeOnOutsideClick = (e: MouseEvent) => {
+  const target = e.target as HTMLElement;
+  if (!target.closest('.search')) showResults.value = false;
+};
+
 const submitSearch = () => {
+  showResults.value = false;
   const q = searchInput.value.trim();
   router.push(q ? `/explore?q=${encodeURIComponent(q)}` : '/explore');
 };
@@ -2018,6 +2115,114 @@ onUnmounted(() => {
   .swap {
     animation: none;
   }
+}
+
+
+/* Results under the search field */
+.results {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 50;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid #e3ded6;
+  background: #fff;
+  box-shadow: 0 24px 50px rgba(20, 17, 13, 0.16);
+  text-align: left;
+}
+
+.result-head {
+  margin: 0;
+  padding: 10px 14px 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #948d84;
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  text-decoration: none;
+  color: #14110d;
+}
+
+.result:hover {
+  background: #fdf3ee;
+}
+
+.result-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  overflow: hidden;
+  flex: none;
+  background: #f1ede6;
+}
+
+.result-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.result-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.result-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-meta {
+  font-size: 12.5px;
+  color: #8a837a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-price {
+  font-size: 14px;
+  font-weight: 800;
+  flex: none;
+}
+
+.result-all {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-top: 1px solid #e3ded6;
+  background: #fff;
+  color: #f2683a;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.result-empty {
+  margin: 0;
+  padding: 16px 14px;
+  font-size: 14px;
+  color: #6d675f;
+}
+
+.result-empty a {
+  color: #f2683a;
+  font-weight: 700;
 }
 
 @media (max-width: 599px) {

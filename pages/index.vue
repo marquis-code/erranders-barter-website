@@ -1475,12 +1475,11 @@ const shareBatchGroup = async (group: BatchGroup) => {
 const batchGroups = computed<BatchGroup[]>(() => {
   const map = new Map<string, BatchGroup>();
 
-  // Use declutterItems, or fallback to toBuy items tagged declutter or with batchId
-  const source = declutterItems.value.length > 0
-    ? declutterItems.value
-    : toBuy.value.filter((i: any) => i.tags?.includes('declutter') || i.batchId);
-
-  const fallbackItems = source.length > 0 ? source : toBuy.value;
+  // Only real declutter batches. This used to fall back to the whole catalogue, which put ordinary
+  // listings in this rail at a discount they never offered.
+  const fallbackItems = declutterItems.value.filter(
+    (i: any) => (Array.isArray(i.tags) && i.tags.includes('declutter')) || i.batchId,
+  );
 
   fallbackItems.forEach((item: any) => {
     const bId = item.batchId || (item.sellerId ? `seller-${item.sellerId._id || item.sellerId}` : `room-${item.location || 'campus'}`);
@@ -1490,7 +1489,7 @@ const batchGroups = computed<BatchGroup[]>(() => {
         batchId: bId,
         groupName: gName,
         hostel: getPublicLocation(item.location),
-        bundleDiscountPercent: Number(item.bundleDiscountPercent || 15),
+        bundleDiscountPercent: Number(item.bundleDiscountPercent || 0),
         seller: item.sellerId,
         items: [],
         totalPrice: 0,
@@ -1528,40 +1527,6 @@ const batchGroups = computed<BatchGroup[]>(() => {
   });
 
   const list = Array.from(map.values());
-
-  // If items in DB didn't have enough items per group (e.g. 1 item per seller/batchId),
-  // consolidate loose 1-item groups into realistic multi-item room clearance albums
-  // so the user sees the album view with stacked photo collages and count badges!
-  if (list.length > 0 && list.every((g) => g.items.length === 1) && fallbackItems.length >= 2) {
-    const consolidated: BatchGroup[] = [];
-    const chunkSize = 3;
-    for (let i = 0; i < fallbackItems.length; i += chunkSize) {
-      const chunk = fallbackItems.slice(i, i + chunkSize);
-      const loc = getPublicLocation(chunk[0].location);
-      const tot = chunk.reduce((sum: number, it: any) => sum + Number(it.price || 0), 0);
-      const disc = Math.round(tot * 0.85);
-      const imgs: string[] = [];
-      chunk.forEach((it: any) => {
-        const im = imageOf(it);
-        if (im && !imgs.includes(im) && imgs.length < 6) imgs.push(im);
-        if (Array.isArray(it.images)) {
-          it.images.forEach((s: string) => { if (!imgs.includes(s) && imgs.length < 6) imgs.push(s); });
-        }
-      });
-      consolidated.push({
-        batchId: chunk[0].batchId || `room-box-${i}`,
-        groupName: `${loc} Room Clearance Box`,
-        hostel: loc,
-        bundleDiscountPercent: 15,
-        seller: chunk[0].sellerId,
-        items: chunk,
-        totalPrice: tot,
-        discountedPrice: disc,
-        images: imgs.length ? imgs : [imageOf(chunk[0])],
-      });
-    }
-    return consolidated.slice(0, 4);
-  }
 
   return list.slice(0, 4);
 });
@@ -1863,6 +1828,7 @@ onUnmounted(() => {
 
 /* ── Hero ── */
 .hero {
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1876,7 +1842,8 @@ onUnmounted(() => {
 
 .hero-inner {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: 36px;
   align-items: center;
 }
@@ -2003,6 +1970,7 @@ onUnmounted(() => {
 /* ── Tickets ── */
 .hero-art {
   position: relative;
+  min-width: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;

@@ -142,7 +142,16 @@
                     <label class="block text-sm font-bold text-slate-700 mb-2">Price (₦)</label>
                     <div class="relative">
                       <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-500">₦</span>
-                      <input v-model.number="form.price" type="number" :disabled="form.type === 'swap'" :placeholder="form.type === 'swap' ? 'Swaps have no price' : 'e.g. 5000'" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-3 outline-none focus:border-brand-500 transition-colors font-medium text-slate-900 disabled:opacity-50" />
+                      <input
+                        :value="priceDisplay"
+                        type="text"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        :disabled="form.type === 'swap'"
+                        :placeholder="form.type === 'swap' ? 'Swaps have no price' : 'e.g. 5,000'"
+                        class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-3 outline-none focus:border-brand-500 transition-colors font-medium text-slate-900 disabled:opacity-50"
+                        @input="onPriceInput"
+                      />
                     </div>
                   </div>
                   <div>
@@ -362,6 +371,25 @@ const handleAuthSuccess = () => {
   pendingAction.value = null
   pendingEvent.value = null
 }
+
+/**
+ * The price is shown grouped as it is typed: 30000 becomes 30,000.
+ *
+ * The field holds text rather than a number so the commas can be written back into it. The numeric value
+ * still goes to the API through form.price, which is what the request sends.
+ */
+const priceDisplay = computed(() => {
+  const n = Number(form.price);
+  return Number.isFinite(n) && n > 0 ? n.toLocaleString('en-NG') : '';
+});
+
+const onPriceInput = (e) => {
+  const input = e.target;
+  const digits = input.value.replace(/[^0-9]/g, '').slice(0, 9);
+  form.price = digits ? Number(digits) : 0;
+  // Rewrite the field with the grouped value, without moving the caret to the end.
+  input.value = digits ? Number(digits).toLocaleString('en-NG') : '';
+};
 
 const catOpen = ref(false)
 const condOpen = ref(false)

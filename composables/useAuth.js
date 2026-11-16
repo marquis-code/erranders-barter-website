@@ -23,6 +23,30 @@ export function useAuth() {
     }
   }
 
+  /**
+   * Write the session once, everywhere it is read.
+   *
+   * The login page and the dashboard did not agree on where a session lives: this wrote localStorage, while
+   * the dashboard layout read the `errandr_token` cookie. Sign in, browse to the homepage, come back, and the
+   * dashboard saw no cookie and asked for a sign in again. Both stores are written now, and both are cleared
+   * on the way out.
+   */
+  const SESSION_DAYS = 7
+  const writeCookies = (tokenValue, userValue) => {
+    const expires = new Date(Date.now() + SESSION_DAYS * 86400 * 1000).toUTCString()
+    if (tokenValue) {
+      document.cookie = `errandr_token=${encodeURIComponent(tokenValue)}; expires=${expires}; path=/; samesite=lax`
+    }
+    if (userValue) {
+      document.cookie = `errandr_user=${encodeURIComponent(JSON.stringify(userValue))}; expires=${expires}; path=/; samesite=lax`
+    }
+  }
+
+  const clearCookies = () => {
+    document.cookie = 'errandr_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+    document.cookie = 'errandr_user=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+  }
+
   const saveSession = (data) => {
     if (!process.client) return
     if (data.access_token) {
@@ -34,12 +58,16 @@ export function useAuth() {
       localStorage.setItem('barter_user', JSON.stringify(data.user))
       user.value = data.user
     }
+    writeCookies(data.access_token || token.value, data.user || user.value)
   }
 
   const logout = () => {
     if (!process.client) return
     localStorage.removeItem('barter_token')
     localStorage.removeItem('barter_user')
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    clearCookies()
     user.value = null
     token.value = null
     isLoggedIn.value = false

@@ -79,6 +79,25 @@ export const useUser = () => {
 
   const isLoggedIn = computed(() => !!token.value);
 
+  /**
+   * Adopt a session that was saved before the two stores were unified.
+   *
+   * Anyone who signed in earlier has `barter_token` in localStorage and no cookie yet. Reading it here means
+   * they are not signed out by the fix.
+   */
+  const hydrateFromLocal = () => {
+    if (typeof window === 'undefined' || token.value) return;
+    try {
+      const storedToken = localStorage.getItem('barter_token') || localStorage.getItem('token');
+      const storedUser = localStorage.getItem('barter_user') || localStorage.getItem('user');
+      if (storedToken) token.value = storedToken;
+      if (storedUser && !user.value) user.value = JSON.parse(storedUser);
+    } catch {
+      // a corrupt entry is the same as none
+    }
+  };
+  hydrateFromLocal();
+
   const fullName = computed(() => {
     if (!user.value) return '';
     return `${user.value.firstName} ${user.value.lastName}`;

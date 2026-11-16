@@ -66,46 +66,42 @@
       </div>
     </header>
 
-    <!-- Mobile Menu Overlay -->
-    <div v-if="mobileMenu" class="md:hidden fixed inset-0 bg-white z-[35] pt-20 px-4 flex flex-col">
-      <nav class="flex-1 space-y-4">
-        <NuxtLink @click="mobileMenu = false" to="/dashboard" class="flex items-center gap-3 px-4 py-4 rounded-xl font-bold text-lg transition-colors bg-brand-50 text-brand-600">
-          <LayoutDashboard class="w-6 h-6" /> Overview
-        </NuxtLink>
-        <NuxtLink @click="mobileMenu = false" to="/dashboard/listings" class="flex items-center gap-3 px-4 py-4 rounded-xl font-bold text-lg text-slate-500 hover:bg-slate-50 transition-colors">
-          <Package class="w-6 h-6" /> My Listings
-        </NuxtLink>
-        <NuxtLink @click="mobileMenu = false" to="/dashboard/trades" class="flex items-center gap-3 px-4 py-4 rounded-xl font-bold text-lg text-slate-500 hover:bg-slate-50 transition-colors">
-          <ArrowRightLeft class="w-6 h-6" /> Escrow Trades
-        </NuxtLink>
-        <NuxtLink @click="mobileMenu = false" to="/dashboard/offers" class="flex items-center gap-3 px-4 py-4 rounded-xl font-bold text-lg text-slate-500 hover:bg-slate-50 transition-colors">
-          <Repeat class="w-6 h-6" /> Trade Hub
-        </NuxtLink>
-        <NuxtLink @click="mobileMenu = false" to="/dashboard/services" class="flex items-center gap-3 px-4 py-4 rounded-xl font-bold text-lg text-slate-500 hover:bg-slate-50 transition-colors">
-          <Briefcase class="w-5 h-5" /> My Services
-        </NuxtLink>
-        <NuxtLink @click="mobileMenu = false" to="/dashboard/availability" class="flex items-center gap-3 px-4 py-4 rounded-xl font-bold text-lg text-slate-500 hover:bg-slate-50 transition-colors">
-          <CalendarClock class="w-5 h-5" /> Availability
-        </NuxtLink>
-        <NuxtLink @click="mobileMenu = false" to="/dashboard/bookings" class="flex items-center gap-3 px-4 py-4 rounded-xl font-bold text-lg text-slate-500 hover:bg-slate-50 transition-colors">
-          <CalendarDays class="w-5 h-5" /> Bookings
-        </NuxtLink>
-        <NuxtLink @click="mobileMenu = false" to="/dashboard/wallet" class="flex items-center gap-3 px-4 py-4 rounded-xl font-bold text-lg text-slate-500 hover:bg-slate-50 transition-colors">
-          <Wallet class="w-6 h-6" /> Escrow Wallet
-        </NuxtLink>
-        <NuxtLink @click="mobileMenu = false" to="/dashboard/settings" class="flex items-center gap-3 px-4 py-4 rounded-xl font-bold text-lg text-slate-500 hover:bg-slate-50 transition-colors">
-          <Settings class="w-6 h-6" /> Settings
-        </NuxtLink>
-        <NuxtLink @click="mobileMenu = false" to="/messages" class="flex items-center justify-between px-4 py-4 rounded-xl font-bold text-lg text-slate-500 hover:bg-slate-50 transition-colors">
-          <div class="flex items-center gap-3"><MessageCircle class="w-6 h-6" /> Messages</div>
-          <span v-if="unreadChats.length > 0" class="bg-red-500 text-white text-sm px-2 py-0.5 rounded-full">{{ unreadChats.length }}</span>
+    <!-- Mobile Menu: a drawer with its own scroll and a pinned footer -->
+    <div v-if="mobileMenu" class="mobile-drawer md:hidden">
+      <header class="drawer-head">
+        <div class="drawer-brand">
+          <span class="drawer-name">Decluttered<span class="drawer-dot">.</span></span>
+        </div>
+        <button type="button" class="drawer-close" aria-label="Close menu" @click="mobileMenu = false">
+          <X class="w-5 h-5" />
+        </button>
+      </header>
+
+      <!-- Everything between the header and Sign out scrolls; the two ends do not. -->
+      <nav class="drawer-nav">
+        <p class="drawer-label">Menu</p>
+
+        <NuxtLink
+          v-for="link in mobileLinks"
+          :key="link.to"
+          :to="link.to"
+          class="drawer-link"
+          :class="{ on: route.path === link.to }"
+          @click="mobileMenu = false"
+        >
+          <component :is="link.icon" class="drawer-icon" />
+          <span>{{ link.label }}</span>
+          <span v-if="link.badge" class="drawer-badge">{{ link.badge }}</span>
         </NuxtLink>
       </nav>
-      <div class="pb-8 pt-4">
-        <button @click="mobileMenu = false; showLogoutModal = true" class="flex items-center gap-3 px-4 py-4 w-full rounded-xl font-bold text-lg text-red-500 hover:bg-red-50 transition-colors">
-          <LogOut class="w-6 h-6" /> Sign Out
+
+      <!-- Sign out sits on the bottom edge, always reachable. -->
+      <footer class="drawer-foot">
+        <button type="button" class="drawer-signout" @click="mobileMenu = false; showLogoutModal = true">
+          <LogOut class="w-5 h-5" />
+          Sign out
         </button>
-      </div>
+      </footer>
     </div>
 
     <!-- Main Content -->
@@ -179,6 +175,19 @@ const isActive = (path) => {
   return route.path.startsWith(path)
 }
 
+const mobileLinks = computed(() => [
+  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { to: '/dashboard/listings', label: 'My listings', icon: Package },
+  { to: '/dashboard/trades', label: 'Escrow trades', icon: ArrowRightLeft },
+  { to: '/dashboard/offers', label: 'Trade hub', icon: Repeat },
+  { to: '/dashboard/services', label: 'My services', icon: Briefcase },
+  { to: '/dashboard/availability', label: 'Availability', icon: CalendarClock },
+  { to: '/dashboard/bookings', label: 'Bookings', icon: CalendarDays },
+  { to: '/dashboard/wallet', label: 'Escrow wallet', icon: Wallet },
+  { to: '/dashboard/settings', label: 'Settings', icon: Settings },
+  { to: '/messages', label: 'Messages', icon: MessageCircle, badge: unreadChats.value.length || 0 },
+])
+
 const handleLogout = () => {
   showLogoutModal.value = false
   logout()
@@ -222,3 +231,125 @@ onUnmounted(() => {
   if (socket) socket.disconnect()
 })
 </script>
+
+<style scoped>
+/* The drawer: fixed height, header and footer pinned, only the middle scrolls. */
+.mobile-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.drawer-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  padding-top: calc(14px + env(safe-area-inset-top));
+  border-bottom: 1px solid #eee9e1;
+}
+
+.drawer-name {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #14110d;
+}
+
+.drawer-dot {
+  color: #ff5c1a;
+}
+
+.drawer-close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #eee9e1;
+  background: #fff;
+  color: #14110d;
+}
+
+.drawer-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 12px 16px;
+}
+
+.drawer-label {
+  margin: 11px 6px 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #948d84;
+}
+
+.drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border-radius: 11px;
+  font-size: 15.5px;
+  font-weight: 650;
+  color: #14110d;
+  text-decoration: none;
+}
+
+.drawer-link:hover {
+  background: #faf7f2;
+}
+
+.drawer-link.on {
+  background: #fff1e8;
+  color: #ff5c1a;
+  font-weight: 750;
+}
+
+.drawer-icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.drawer-badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #ff5c1a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.drawer-foot {
+  flex: none;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid #eee9e1;
+  background: #fff;
+}
+
+.drawer-signout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  border-radius: 12px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 15px;
+  font-weight: 750;
+}
+</style>

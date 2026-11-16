@@ -630,7 +630,7 @@ const concludeNegotiationAndTriggerPaystack = async () => {
     const finalAmount = totalAmount.value
 
     const runtimeConfig = useRuntimeConfig()
-    const paystackKey = runtimeConfig.public.paystackPublicKey || 'pk_test_e3bcb144aaf2804f21581969dffaa563ae467ed4'
+    const paystackKey = runtimeConfig.public.paystackPublicKey
 
     const handler = window.PaystackPop.setup({
       key: paystackKey,
@@ -684,7 +684,7 @@ const handleDirectPaystackCheckout = () => {
   error.value = ''
 
   const runtimeConfig = useRuntimeConfig()
-  const paystackKey = runtimeConfig.public.paystackPublicKey || 'pk_test_e3bcb144aaf2804f21581969dffaa563ae467ed4'
+  const paystackKey = runtimeConfig.public.paystackPublicKey
 
   const handler = window.PaystackPop.setup({
     key: paystackKey,

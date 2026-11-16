@@ -612,6 +612,28 @@ const sendCounterNegotiation = async () => {
   }
 }
 
+/** Wait for the Paystack inline script, so a slow load does not look like a failed negotiation. */
+const loadPaystackScript = () =>
+  new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false)
+    if (window.PaystackPop) return resolve(true)
+
+    const existing = document.querySelector('script[src*="paystack"]')
+    if (existing) {
+      existing.addEventListener('load', () => resolve(Boolean(window.PaystackPop)))
+      existing.addEventListener('error', () => resolve(false))
+      setTimeout(() => resolve(Boolean(window.PaystackPop)), 5000)
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://js.paystack.co/v1/inline.js'
+    script.async = true
+    script.onload = () => resolve(Boolean(window.PaystackPop))
+    script.onerror = () => resolve(false)
+    document.head.appendChild(script)
+  })
+
 // 2. Conclude Negotiation & Trigger Paystack for payment
 const concludeNegotiationAndTriggerPaystack = async () => {
   if (!activeNegotiationTx.value) return
@@ -631,6 +653,22 @@ const concludeNegotiationAndTriggerPaystack = async () => {
 
     const runtimeConfig = useRuntimeConfig()
     const paystackKey = runtimeConfig.public.paystackPublicKey
+
+    // The modal cannot open without the script or a key, and the failure used to read "Failed to finalize
+    // negotiation" — which sent people back to retry a negotiation that had already succeeded.
+    await loadPaystackScript()
+    if (!paystackKey) {
+      error.value =
+        'Card payment is not configured on this site yet. Nothing was charged, and the negotiation has been saved.'
+      initiating.value = false
+      return
+    }
+    if (!window.PaystackPop) {
+      error.value =
+        'The payment window could not load. Check your connection, or refresh and try again. Nothing was charged.'
+      initiating.value = false
+      return
+    }
 
     const handler = window.PaystackPop.setup({
       key: paystackKey,

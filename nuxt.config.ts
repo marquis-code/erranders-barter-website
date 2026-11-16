@@ -52,7 +52,10 @@ export default defineNuxtConfig({
       // or a deploy with a missing env var, the entire site would have silently
       // talked to a DIFFERENT PRODUCT and 401'd on every call, which is far
       // harder to diagnose than an obviously-wrong host.
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || process.env.VITE_API_BASE_URL || 'http://localhost:3100/api/v1',
+      apiBaseUrl:
+        process.env.NUXT_PUBLIC_API_BASE_URL ||
+        process.env.VITE_API_BASE_URL ||
+        (process.env.NODE_ENV === 'production' ? 'https://barter-backend-api.erranders.org/api/v1' : 'http://localhost:3100/api/v1'),
       apiBase: process.env.VITE_API_BASE_URL || 'http://localhost:3100/api/v1',
       wsBase: process.env.WS_BASE_URL || process.env.VITE_WS_URL || 'http://localhost:3100',
       // Every business gets `<business-name>.erranders.org`.

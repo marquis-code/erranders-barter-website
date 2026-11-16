@@ -39,16 +39,30 @@ const listenersAttached = ref(false)
 const tokenWatcherAttached = ref(false)
 const seenIncomingIds = new Set<string>()
 
+/**
+ * The API host, not the site host.
+ *
+ * runtimeConfig.public.apiBaseUrl falls back to localhost when the environment does not define it, and the
+ * production build was connecting the socket to the storefront origin — which answers /socket.io/ with a 404
+ * from the web server rather than the API. The API base the axios client already uses is the reliable answer,
+ * with the socket served from the same host.
+ */
 const resolveWsBaseUrl = (): string => {
-  let raw = ''
-  try {
-    raw = String(useRuntimeConfig().public.apiBaseUrl || '')
-  } catch {
-    raw = ''
-  }
-  if (!raw) {
-    raw = String(import.meta.env?.VITE_API_BASE_URL || 'http://localhost:3100')
-  }
+  const candidates = [
+    (() => {
+      try {
+        return String(useRuntimeConfig().public.apiBaseUrl || '')
+      } catch {
+        return ''
+      }
+    })(),
+    String(import.meta.env?.VITE_API_BASE_URL || ''),
+    String(import.meta.env?.NUXT_PUBLIC_API_BASE_URL || ''),
+  ].filter(Boolean)
+
+  // Anything pointing at localhost is a development default leaking into production.
+  const usable = candidates.find((c) => c && !/localhost|127\.0\.0\.1/.test(c))
+  const raw = usable || 'https://barter-backend-api.erranders.org/api/v1'
   return raw.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '')
 }
 
@@ -240,6 +254,9 @@ export const useChat = () => {
 
     socket.value = io(resolveWsBaseUrl(), {
       auth: { token: authToken },
+      path: '/socket.io/',
+      transports: ['websocket', 'polling'],
+      withCredentials: false,
     })
 
     socket.value.on('connect', () => {

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-black text-white selection:bg-brand-500 selection:text-white font-sans pb-24">
+  <div class="profile-page bg-black text-white selection:bg-brand-500 selection:text-white font-sans">
     
     <!-- Top Sticky Header Bar -->
     <header class="sticky top-0 z-40 bg-black/85 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between">
@@ -28,6 +28,7 @@
         <Share2 class="w-4 h-4" />
       </button>
     </header>
+    <div class="profile-body">
 
     <!-- Network Loading State with Centered Decluttered Logo -->
     <div v-if="loading" class="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
@@ -285,6 +286,7 @@
       </div>
     </Transition>
 
+    </div>
   </div>
 </template>
 
@@ -453,3 +455,25 @@ useSeoMeta({
   description: computed(() => `View campus listings, reels and verified trades from ${profileUser.value?.firstName || 'Student'} on Decluttered by Erranders.`),
 });
 </script>
+
+<style scoped>
+/* The profile is a screen, not a document: it fills the viewport and scrolls inside itself, so the window
+   never scrolls and the header cannot drift over the listing grid. */
+.profile-page {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.profile-page > header {
+  flex: none;
+}
+
+.profile-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+</style>

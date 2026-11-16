@@ -6,7 +6,8 @@
     </main>
     <AppFooter v-if="route.path === '/'" />
     <ChatWidget />
-    <CatchUpBanner />
+    <!-- Kept off the profile: it overlays the listing grid and forces the page to scroll. -->
+    <CatchUpBanner v-if="!route.path.startsWith('/profile')" />
   </div>
 </template>
 
